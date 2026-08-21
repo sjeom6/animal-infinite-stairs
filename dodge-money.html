@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>피해서 돈 벌자!</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Arial,"Noto Sans KR",sans-serif;background:#07152b;color:#fff}
+button{font:inherit}
+#game{position:relative;width:100%;height:100%;max-width:900px;margin:auto;overflow:hidden;
+background:linear-gradient(#061329 0%,#092c55 68%,#163c5c 100%)}
+#stars{position:absolute;inset:0;background-image:
+radial-gradient(#fff 1px,transparent 1px),radial-gradient(#b9d8ff 1px,transparent 1px);
+background-size:90px 90px,137px 137px;background-position:10px 20px,40px 60px;opacity:.35}
+#city{position:absolute;bottom:0;width:100%;height:24%;background:
+linear-gradient(90deg,transparent 0 4%,#071629 4% 9%,transparent 9% 11%,#071629 11% 18%,transparent 18% 20%,#071629 20% 27%,transparent 27% 29%,#071629 29% 35%,transparent 35% 38%,#071629 38% 45%,transparent 45% 48%,#071629 48% 54%,transparent 54% 57%,#071629 57% 65%,transparent 65% 68%,#071629 68% 74%,transparent 74% 77%,#071629 77% 84%,transparent 84% 87%,#071629 87% 95%,transparent 95%);
+opacity:.85}
+#hud{position:absolute;z-index:20;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;gap:10px}
+.panel{background:#07101ee8;border:2px solid #536276;border-radius:18px;padding:10px 18px;text-align:center;min-width:145px;box-shadow:0 5px 20px #0008}
+.panel small{display:block;color:#bfc9d6;font-size:12px}.money{color:#5cff5c;font-size:24px;font-weight:800}
+#title{position:absolute;z-index:20;top:17px;left:50%;transform:translateX(-50%);text-align:center;white-space:nowrap}
+#title b{font-size:28px;color:#ffd522;text-shadow:0 3px #000}
+#title div{font-size:13px;margin-top:3px}
+#player{position:absolute;z-index:10;bottom:27%;left:50%;width:50px;height:64px;transform:translateX(-50%);transition:left .06s linear}
+.player-body{position:absolute;bottom:0;left:7px;width:36px;height:42px;border-radius:15px 15px 10px 10px;background:#f4f4f4;border:3px solid #222}
+.player-head{position:absolute;top:0;left:11px;width:29px;height:29px;border-radius:50%;background:#f1b07d;border:3px solid #222}
+.player-head:before{content:"";position:absolute;top:-5px;left:-1px;width:30px;height:13px;background:#29241f;border-radius:18px 18px 5px 5px}
+.ad{position:absolute;z-index:8;width:74px;height:112px;border-radius:24px 24px 15px 15px;border:3px solid #222;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:900;font-size:15px;box-shadow:0 10px 25px #0008;user-select:none}
+.ad:before{content:"";position:absolute;top:-38px;width:28px;height:45px;background:linear-gradient(#fff,#ff8c00,#ffef55);clip-path:polygon(50% 0,80% 40%,100% 100%,50% 82%,0 100%,20% 40%);filter:drop-shadow(0 0 8px #ff8c00)}
+.ad:after{content:"";position:absolute;bottom:-17px;width:28px;height:20px;background:inherit;clip-path:polygon(0 0,100% 0,50% 100%)}
+.ad.finnq{background:#2077df}.ad.coupang{background:#fff;color:#111}.ad.baemin{background:#1bb9bb}.ad.eats{background:#32251e}.ad.bed{background:#eee;color:#161616}
+#controls{position:absolute;z-index:30;bottom:9%;left:0;right:0;display:flex;justify-content:space-between;padding:0 35px}
+.ctrl{width:74px;height:58px;border-radius:16px;border:2px solid #617086;background:#172334dd;color:white;font-size:30px;box-shadow:0 5px 15px #0008}
+#start{position:absolute;z-index:50;inset:0;background:#020a15d9;display:flex;align-items:center;justify-content:center}
+.modal{width:min(90%,430px);background:#091523;border:2px solid #506178;border-radius:24px;padding:28px;text-align:center;box-shadow:0 20px 50px #000}
+.modal h1{margin:0 0 8px;color:#ffd522}.modal p{color:#c9d2dc;line-height:1.7}
+.mainbtn{border:0;border-radius:14px;padding:14px 30px;background:#ffcc22;color:#111;font-weight:900;cursor:pointer}
+#hitModal{display:none;position:absolute;z-index:60;inset:0;background:#020711dd;align-items:center;justify-content:center}
+.adbox{width:min(88%,390px);background:#fff;color:#111;border-radius:20px;overflow:hidden;text-align:center}
+.fakeAd{height:210px;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:900}
+.adbox .copy{padding:16px}.adbox button{margin:0 0 18px;padding:12px 25px;border:0;border-radius:10px;background:#111;color:#fff}
+#legend{position:absolute;z-index:20;bottom:2px;left:50%;transform:translateX(-50%);font-size:11px;color:#aab7c7;white-space:nowrap}
+@media(max-width:600px){
+ #title{top:72px}.panel{min-width:110px;padding:7px 10px}.money{font-size:19px}
+ .panel small{font-size:10px}.ctrl{width:68px;height:54px}
+}
+</style>
+</head>
+<body>
+<div id="game">
+ <div id="stars"></div><div id="city"></div>
+ <div id="hud">
+   <div class="panel"><small>획득 금액</small><span class="money" id="money">₩0</span></div>
+   <div class="panel"><small>남은 생명</small><span id="lives">❤️❤️❤️</span></div>
+ </div>
+ <div id="title"><b>피해서 '돈' 벌자!</b><div>광고를 피하면 광고비를 획득!</div></div>
+ <div id="player"><div class="player-head"></div><div class="player-body"></div></div>
+ <div id="controls"><button class="ctrl" id="left">◀</button><button class="ctrl" id="right">▶</button></div>
+ <div id="legend">광고에 맞으면 무료 광고가 재생됩니다</div>
+
+ <div id="start"><div class="modal">
+   <h1>💰 피해서 돈 벌자!</h1>
+   <p>하늘에서 광고 총알이 떨어집니다.<br>
+   광고를 <b>피하면 광고비를 받고</b>,<br>
+   맞으면 해당 광고를 <b>무료로 시청</b>해야 합니다.</p>
+   <button class="mainbtn" id="startBtn">게임 시작</button>
+ </div></div>
+
+ <div id="hitModal"><div class="adbox">
+   <div class="fakeAd" id="fakeAd">광고</div>
+   <div class="copy"><h2 id="hitName">광고를 맞았습니다!</h2>
+   <p>대신 이 광고는 무료로 시청하세요 😎</p>
+   <button id="watchBtn">광고 보기 (3초)</button></div>
+ </div></div>
+</div>
+
+<script>
+const game=document.getElementById("game"), player=document.getElementById("player");
+const moneyEl=document.getElementById("money"), livesEl=document.getElementById("lives");
+const start=document.getElementById("start"), hitModal=document.getElementById("hitModal");
+const ads=[
+ {name:"finnq", label:"finnq", value:120, cls:"finnq", bg:"#2077df"},
+ {name:"쿠팡", label:"coupang", value:150, cls:"coupang", bg:"#fff"},
+ {name:"배민", label:"배민", value:110, cls:"baemin", bg:"#1bb9bb"},
+ {name:"쿠팡이츠", label:"coupang<br>eats", value:130, cls:"eats", bg:"#32251e"},
+ {name:"장수돌침대", label:"장수<br>돌침대", value:200, cls:"bed", bg:"#eee"}
+];
+let x=50,money=0,lives=3,running=false,spawnTimer=null,scoreTimer=null,level=1,spawnCount=0;
+let activeAds=[], pendingAd=null;
+
+function reset(){
+ x=50; money=0; lives=3; level=1; moneyEl.textContent="₩0"; livesEl.textContent="❤️❤️❤️";
+ activeAds.forEach(a=>a.el.remove());activeAds=[];
+}
+function move(dir){x=Math.max(7,Math.min(93,x+dir*5));player.style.left=x+"%";}
+document.addEventListener("keydown",e=>{if(e.key==="ArrowLeft")move(-1);if(e.key==="ArrowRight")move(1);});
+["left","right"].forEach(id=>{
+ const btn=document.getElementById(id), dir=id==="left"?-1:1;
+ btn.addEventListener("pointerdown",()=>move(dir));
+});
+function spawn(){
+ if(!running)return;
+ const a=ads[Math.floor(Math.random()*ads.length)];
+ const el=document.createElement("div");el.className="ad "+a.cls;el.innerHTML=a.label;
+ el.style.left=(6+Math.random()*88)+"%";el.style.top="-125px";
+ game.appendChild(el);
+ const obj={el,a,y:-125,speed:4.2+level*.65+Math.random()*2.2};
+ activeAds.push(obj);
+}
+function hit(obj){
+ const pr=player.getBoundingClientRect(), ar=obj.el.getBoundingClientRect();
+ return !(pr.right<ar.left+10||pr.left>ar.right-10||pr.bottom<ar.top+10||pr.top>ar.bottom-10);
+}
+function showHit(obj){
+ running=false; pendingAd=obj;
+ document.getElementById("hitName").textContent=obj.a.name+" 광고를 맞았습니다!";
+ const fake=document.getElementById("fakeAd");fake.innerHTML=obj.a.label;fake.style.background=obj.a.bg;
+ fake.style.color=(obj.a.cls==="coupang"||obj.a.cls==="bed")?"#111":"#fff";
+ hitModal.style.display="flex";
+}
+document.getElementById("watchBtn").onclick=()=>{
+ const btn=document.getElementById("watchBtn");btn.disabled=true;
+ let n=3;btn.textContent="광고 시청 중 "+n+"초";
+ const t=setInterval(()=>{n--;btn.textContent=n?"광고 시청 중 "+n+"초":"게임 계속하기";if(n<=0){clearInterval(t);btn.disabled=false;
+   btn.onclick=resumeAfterAd;
+ }},1000);
+};
+function resumeAfterAd(){hitModal.style.display="none";if(pendingAd){pendingAd.el.remove();activeAds=activeAds.filter(a=>a!==pendingAd);pendingAd=null}lives--;livesEl.textContent="❤️".repeat(lives)+"🖤".repeat(3-lives);if(lives<=0){gameOver();return}running=true}
+function gameOver(){running=false;clearInterval(spawnTimer);clearInterval(scoreTimer);alert("게임 종료!\\n획득 금액: "+money.toLocaleString()+"원");start.style.display="flex";start.querySelector("h1").textContent="💰 "+money.toLocaleString()+"원 획득!";start.querySelector("p").innerHTML="다시 도전해서 더 많이 벌어보세요!";start.querySelector("#startBtn").textContent="다시 시작";}
+function loop(){
+ if(running){
+   for(let i=activeAds.length-1;i>=0;i--){
+    const o=activeAds[i];o.y+=o.speed;o.el.style.top=o.y+"px";
+    if(hit(o)){showHit(o);break}
+    if(o.y>game.clientHeight){money+=o.a.value;moneyEl.textContent="₩"+money.toLocaleString();o.el.remove();activeAds.splice(i,1)}
+   }
+ }
+ requestAnimationFrame(loop);
+}
+document.getElementById("startBtn").onclick=()=>{
+ reset();start.style.display="none";running=true;
+ clearInterval(spawnTimer);clearInterval(scoreTimer);
+ spawnTimer=setInterval(()=>{
+   // 초반부터 2개씩 등장, 시간이 지나면 3~4개까지 동시 낙하
+   spawn();
+   if(level>=3) spawn();
+   if(level>=7 && Math.random()<0.65) spawn();
+ },500);
+ scoreTimer=setInterval(()=>{
+   if(running) level=Math.min(15,1+Math.floor(money/250));
+ },1000);
+};
+loop();
+</script>
+</body>
+</html>

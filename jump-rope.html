@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>통통 줄넘기</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root { color-scheme: light; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+    body {
+      margin: 0; min-height: 100vh; display: grid; place-items: center; overflow: hidden;
+      background: linear-gradient(#72d8ff 0 65%, #b7e76d 65% 100%); color: #183153;
+      user-select: none; touch-action: manipulation;
+    }
+    .sun { position: fixed; top: 7%; right: 10%; width: 90px; aspect-ratio: 1; border-radius: 50%; background: #ffe471; box-shadow: 0 0 45px #fff19b; }
+    .cloud, .cloud::before, .cloud::after { position: fixed; width: 105px; height: 35px; border-radius: 999px; background: #fff; opacity: .85; content: ""; }
+    .cloud { top: 16%; left: 10%; }
+    .cloud::before { width: 48px; height: 48px; left: 18px; bottom: 10px; }
+    .cloud::after { width: 60px; height: 60px; left: 48px; bottom: 4px; }
+    .game { position: relative; width: min(92vw, 720px); height: min(76vh, 590px); text-align: center; }
+    header { display: flex; justify-content: space-between; align-items: center; gap: 12px; position: relative; z-index: 5; }
+    h1 { margin: 0; font-size: clamp(27px, 5vw, 45px); color: white; text-shadow: 0 4px 0 #278bb3; }
+    .scoreboard { display: flex; gap: 8px; }
+    .pill { background: #ffffffdd; border: 3px solid white; border-radius: 18px; padding: 8px 14px; font-weight: 900; box-shadow: 0 5px 0 #3ea1c5; }
+    .stage { position: absolute; inset: 75px 0 0; perspective: 700px; }
+    .ground { position: absolute; left: 8%; right: 8%; bottom: 13%; height: 22%; border-radius: 50%; background: #91cb50; box-shadow: inset 0 12px #aee566; }
+    .player { position: absolute; z-index: 3; left: 50%; bottom: 23%; width: 86px; height: 170px; transform: translateX(-50%); }
+    .player.jump { animation: jump .58s cubic-bezier(.2,.75,.35,1); }
+    @keyframes jump { 0%,100% { transform: translateX(-50%) translateY(0) rotate(0); } 48% { transform: translateX(-50%) translateY(-145px) rotate(-4deg); } }
+    .head { position: absolute; left: 19px; top: 0; width: 50px; height: 55px; border-radius: 45% 45% 48% 48%; background: #ffd0a6; border: 4px solid #313954; }
+    .hair { position: absolute; inset: -5px -5px auto; height: 25px; border-radius: 40px 40px 15px 15px; background: #313954; }
+    .eye { position: absolute; top: 27px; width: 5px; height: 7px; border-radius: 50%; background: #313954; }
+    .eye.left { left: 12px; } .eye.right { right: 12px; }
+    .body { position: absolute; left: 17px; top: 51px; width: 55px; height: 67px; border-radius: 18px 18px 8px 8px; background: #ff6961; border: 4px solid #313954; }
+    .body::after { content: "★"; color: #fff08a; font-size: 25px; line-height: 49px; }
+    .arm, .leg { position: absolute; width: 15px; background: #ffd0a6; border: 4px solid #313954; border-radius: 12px; transform-origin: top center; }
+    .arm { top: 59px; height: 64px; } .arm.left { left: 7px; transform: rotate(22deg); } .arm.right { right: 4px; transform: rotate(-22deg); }
+    .leg { top: 111px; height: 56px; background: #4c76d9; } .leg.left { left: 25px; transform: rotate(7deg); } .leg.right { right: 18px; transform: rotate(-7deg); }
+    .rope-wrap { position: absolute; z-index: 4; left: 50%; bottom: 18%; width: 370px; height: 260px; transform: translateX(-50%) rotateX(65deg); pointer-events: none; }
+    .rope { width: 100%; height: 100%; border: 10px solid #8d45d7; border-top-color: #f15bb5; border-radius: 50%; box-shadow: 0 0 0 3px #ffffff66; }
+    .rope.hit { filter: brightness(1.4); }
+    .message { position: absolute; z-index: 8; inset: 45% 0 auto; transform: translateY(-50%); }
+    .card { display: inline-block; padding: 20px 28px; max-width: 92%; border: 4px solid white; border-radius: 24px; background: #ffffffed; box-shadow: 0 9px 0 #278bb3; }
+    .card h2 { margin: 0 0 8px; font-size: clamp(24px, 5vw, 38px); }
+    .card p { margin: 5px 0 16px; font-weight: 700; }
+    button { border: 0; border-radius: 999px; padding: 12px 25px; background: #ff6961; color: white; font-size: 18px; font-weight: 900; box-shadow: 0 5px 0 #c63f39; cursor: pointer; }
+    button:active { transform: translateY(3px); box-shadow: 0 2px 0 #c63f39; }
+    .hint { position: fixed; bottom: max(18px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); width: max-content; max-width: 90vw; padding: 9px 16px; border-radius: 99px; background: #183153d9; color: white; font-weight: 700; font-size: 14px; }
+    .shake { animation: shake .35s; }
+    @keyframes shake { 25%{transform:translateX(-8px)} 50%{transform:translateX(7px)} 75%{transform:translateX(-4px)} }
+    @media (max-height: 580px) { .game { height: 95vh; } .stage { inset-block-start: 62px; } .player { transform: translateX(-50%) scale(.82); transform-origin: bottom; } h1 { font-size: 28px; } }
+  </style>
+</head>
+<body>
+  <div class="sun"></div><div class="cloud"></div>
+  <main class="game" id="game">
+    <header><h1>통통 줄넘기</h1><div class="scoreboard"><div class="pill">점수 <span id="score">0</span></div><div class="pill">최고 <span id="best">0</span></div></div></header>
+    <section class="stage">
+      <div class="ground"></div>
+      <div class="player" id="player"><div class="leg left"></div><div class="leg right"></div><div class="arm left"></div><div class="arm right"></div><div class="body"></div><div class="head"><div class="hair"></div><i class="eye left"></i><i class="eye right"></i></div></div>
+      <div class="rope-wrap" id="ropeWrap"><div class="rope" id="rope"></div></div>
+      <div class="message" id="message"><div class="card"><h2 id="title">준비됐나요?</h2><p id="description">줄이 아래로 올 때 타이밍에 맞춰 점프!</p><button id="start">게임 시작</button></div></div>
+    </section>
+  </main>
+  <div class="hint">스페이스바 · ↑ · 화면 터치로 점프</div>
+  <script>
+    const player = document.querySelector('#player');
+    const ropeWrap = document.querySelector('#ropeWrap');
+    const gameEl = document.querySelector('#game');
+    const message = document.querySelector('#message');
+    const title = document.querySelector('#title');
+    const description = document.querySelector('#description');
+    const startBtn = document.querySelector('#start');
+    const scoreEl = document.querySelector('#score');
+    const bestEl = document.querySelector('#best');
+    let running = false, jumping = false, score = 0, angle = 180, last = 0, speed = 155, counted = false;
+    let best = 0;
+    // iOS에서 파일 앱을 통해 연 HTML은 localStorage가 차단될 수 있다.
+    try { best = Number(window.localStorage.getItem('jump-rope-best') || 0); } catch (error) {}
+    bestEl.textContent = best;
+
+    function jump() {
+      if (!running || jumping) return;
+      jumping = true; player.classList.remove('jump'); void player.offsetWidth; player.classList.add('jump');
+      setTimeout(() => jumping = false, 560);
+    }
+    function startGame(e) {
+      if (e) { e.preventDefault(); e.stopPropagation(); }
+      score = 0; speed = 155; angle = 180; counted = false; running = true; last = performance.now();
+      scoreEl.textContent = 0; message.hidden = true; requestAnimationFrame(loop);
+    }
+    function gameOver() {
+      running = false; gameEl.classList.add('shake'); setTimeout(() => gameEl.classList.remove('shake'), 400);
+      if (score > best) {
+        best = score; bestEl.textContent = best;
+        try { window.localStorage.setItem('jump-rope-best', best); } catch (error) {}
+      }
+      title.textContent = '앗, 줄에 걸렸어요!'; description.textContent = `최종 점수는 ${score}점이에요.`; startBtn.textContent = '다시 하기'; message.hidden = false;
+    }
+    function loop(now) {
+      if (!running) return;
+      const dt = Math.min((now - last) / 1000, .035); last = now; angle = (angle + speed * dt) % 360;
+      ropeWrap.style.transform = `translateX(-50%) rotateX(${angle}deg)`;
+      const nearFeet = angle > 345 || angle < 16;
+      if (nearFeet && !counted) {
+        counted = true;
+        if (!jumping) return gameOver();
+        score++; scoreEl.textContent = score; speed = Math.min(310, 155 + score * 6);
+      }
+      if (angle > 35 && angle < 320) counted = false;
+      requestAnimationFrame(loop);
+    }
+    startBtn.addEventListener('click', startGame);
+    document.addEventListener('keydown', e => { if (['Space','ArrowUp'].includes(e.code)) { e.preventDefault(); if (running) jump(); else startGame(); } });
+    function touchJump(e) {
+      if (e.target === startBtn || !running) return;
+      e.preventDefault();
+      jump();
+    }
+    // 구형 iOS Safari는 Pointer Events를 지원하지 않으므로 touchstart를 사용한다.
+    if (window.PointerEvent) document.addEventListener('pointerdown', touchJump);
+    else document.addEventListener('touchstart', touchJump, { passive: false });
+  </script>
+</body>
+</html>
