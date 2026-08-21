@@ -2,144 +2,124 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-  <title>동물 무한계단</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>통통 줄넘기</title>
   <style>
-    *{box-sizing:border-box} html,body{margin:0;width:100%;height:100%;overflow:hidden}
-    body{font-family:system-ui,-apple-system,"Apple SD Gothic Neo",sans-serif;background:#15182e;color:#fff;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
-    canvas{display:block;width:100%;height:100%}
-    .hud{position:fixed;inset:max(14px,env(safe-area-inset-top)) 16px auto;display:flex;align-items:flex-start;pointer-events:none}
-    .score{font-size:clamp(28px,7vw,48px);font-weight:1000;text-shadow:0 4px #25295a}.score small{display:block;font-size:12px;letter-spacing:2px;color:#d7dcff}
-    .controls{position:fixed;left:0;right:0;bottom:max(18px,env(safe-area-inset-bottom));display:flex;justify-content:center;gap:18px}
-    .control{width:min(38vw,190px);height:78px;border:0;border-radius:24px;color:white;font-size:31px;font-weight:1000;box-shadow:0 8px rgba(0,0,0,.25);cursor:pointer;-webkit-tap-highlight-color:transparent}
-    .control.left{background:#6865e8}.control.right{background:#ff5e78}.control:active,.control.pressed{transform:translateY(5px);box-shadow:0 3px rgba(0,0,0,.25)}
-    .overlay{position:fixed;inset:0;display:grid;place-items:center;padding:20px;background:linear-gradient(#262b67dd,#15182ef2);z-index:5}
-    .overlay[hidden]{display:none}.panel{width:min(92vw,470px);padding:27px;text-align:center;background:#fff;color:#272b55;border-radius:30px;box-shadow:0 13px #0d1024}
-    h1{font-size:clamp(30px,8vw,48px);margin:0 0 8px}p{margin:7px 0 20px;font-weight:700;color:#666b8f;line-height:1.5}
-    .animals{display:flex;gap:13px;margin-bottom:22px}.animal{flex:1;border:4px solid #e7e8f3;border-radius:22px;background:#f7f7fc;padding:14px 7px;color:#34385f;font-size:17px;font-weight:900;cursor:pointer}
-    .animal span{display:block;font-size:57px;margin-bottom:5px}.animal.selected{border-color:#706cf0;background:#ebeaff;transform:translateY(-4px)}
-    .start{border:0;border-radius:18px;width:100%;padding:15px;background:linear-gradient(135deg,#716df1,#fc5e82);color:#fff;font-size:21px;font-weight:1000;box-shadow:0 6px #3c3a92;cursor:pointer}.start:active{transform:translateY(4px);box-shadow:0 2px #3c3a92}
-    .guide{position:fixed;bottom:112px;left:50%;transform:translateX(-50%);font-size:13px;font-weight:800;color:#ffffffbb;white-space:nowrap;pointer-events:none}
+    * { box-sizing: border-box; }
+    :root { color-scheme: light; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+    body {
+      margin: 0; min-height: 100vh; display: grid; place-items: center; overflow: hidden;
+      background: linear-gradient(#72d8ff 0 65%, #b7e76d 65% 100%); color: #183153;
+      user-select: none; touch-action: manipulation;
+    }
+    .sun { position: fixed; top: 7%; right: 10%; width: 90px; aspect-ratio: 1; border-radius: 50%; background: #ffe471; box-shadow: 0 0 45px #fff19b; }
+    .cloud, .cloud::before, .cloud::after { position: fixed; width: 105px; height: 35px; border-radius: 999px; background: #fff; opacity: .85; content: ""; }
+    .cloud { top: 16%; left: 10%; }
+    .cloud::before { width: 48px; height: 48px; left: 18px; bottom: 10px; }
+    .cloud::after { width: 60px; height: 60px; left: 48px; bottom: 4px; }
+    .game { position: relative; width: min(92vw, 720px); height: min(76vh, 590px); text-align: center; }
+    header { display: flex; justify-content: space-between; align-items: center; gap: 12px; position: relative; z-index: 5; }
+    h1 { margin: 0; font-size: clamp(27px, 5vw, 45px); color: white; text-shadow: 0 4px 0 #278bb3; }
+    .scoreboard { display: flex; gap: 8px; }
+    .pill { background: #ffffffdd; border: 3px solid white; border-radius: 18px; padding: 8px 14px; font-weight: 900; box-shadow: 0 5px 0 #3ea1c5; }
+    .stage { position: absolute; inset: 75px 0 0; perspective: 700px; }
+    .ground { position: absolute; left: 8%; right: 8%; bottom: 13%; height: 22%; border-radius: 50%; background: #91cb50; box-shadow: inset 0 12px #aee566; }
+    .player { position: absolute; z-index: 3; left: 50%; bottom: 23%; width: 86px; height: 170px; transform: translateX(-50%); }
+    .player.jump { animation: jump .58s cubic-bezier(.2,.75,.35,1); }
+    @keyframes jump { 0%,100% { transform: translateX(-50%) translateY(0) rotate(0); } 48% { transform: translateX(-50%) translateY(-145px) rotate(-4deg); } }
+    .head { position: absolute; left: 19px; top: 0; width: 50px; height: 55px; border-radius: 45% 45% 48% 48%; background: #ffd0a6; border: 4px solid #313954; }
+    .hair { position: absolute; inset: -5px -5px auto; height: 25px; border-radius: 40px 40px 15px 15px; background: #313954; }
+    .eye { position: absolute; top: 27px; width: 5px; height: 7px; border-radius: 50%; background: #313954; }
+    .eye.left { left: 12px; } .eye.right { right: 12px; }
+    .body { position: absolute; left: 17px; top: 51px; width: 55px; height: 67px; border-radius: 18px 18px 8px 8px; background: #ff6961; border: 4px solid #313954; }
+    .body::after { content: "★"; color: #fff08a; font-size: 25px; line-height: 49px; }
+    .arm, .leg { position: absolute; width: 15px; background: #ffd0a6; border: 4px solid #313954; border-radius: 12px; transform-origin: top center; }
+    .arm { top: 59px; height: 64px; } .arm.left { left: 7px; transform: rotate(22deg); } .arm.right { right: 4px; transform: rotate(-22deg); }
+    .leg { top: 111px; height: 56px; background: #4c76d9; } .leg.left { left: 25px; transform: rotate(7deg); } .leg.right { right: 18px; transform: rotate(-7deg); }
+    .rope-wrap { position: absolute; z-index: 4; left: 50%; bottom: 18%; width: 370px; height: 260px; transform: translateX(-50%) rotateX(65deg); pointer-events: none; }
+    .rope { width: 100%; height: 100%; border: 10px solid #8d45d7; border-top-color: #f15bb5; border-radius: 50%; box-shadow: 0 0 0 3px #ffffff66; }
+    .rope.hit { filter: brightness(1.4); }
+    .message { position: absolute; z-index: 8; inset: 45% 0 auto; transform: translateY(-50%); }
+    .card { display: inline-block; padding: 20px 28px; max-width: 92%; border: 4px solid white; border-radius: 24px; background: #ffffffed; box-shadow: 0 9px 0 #278bb3; }
+    .card h2 { margin: 0 0 8px; font-size: clamp(24px, 5vw, 38px); }
+    .card p { margin: 5px 0 16px; font-weight: 700; }
+    button { border: 0; border-radius: 999px; padding: 12px 25px; background: #ff6961; color: white; font-size: 18px; font-weight: 900; box-shadow: 0 5px 0 #c63f39; cursor: pointer; }
+    button:active { transform: translateY(3px); box-shadow: 0 2px 0 #c63f39; }
+    .hint { position: fixed; bottom: max(18px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); width: max-content; max-width: 90vw; padding: 9px 16px; border-radius: 99px; background: #183153d9; color: white; font-weight: 700; font-size: 14px; }
+    .shake { animation: shake .35s; }
+    @keyframes shake { 25%{transform:translateX(-8px)} 50%{transform:translateX(7px)} 75%{transform:translateX(-4px)} }
+    @media (max-height: 580px) { .game { height: 95vh; } .stage { inset-block-start: 62px; } .player { transform: translateX(-50%) scale(.82); transform-origin: bottom; } h1 { font-size: 28px; } }
   </style>
 </head>
 <body>
-  <canvas id="game"></canvas>
-  <div class="hud"><div class="score"><small>FLOOR</small><span id="score">0</span></div></div>
-  <div class="guide">다음 계단 방향을 선택하세요 · 키보드 ← →</div>
-  <div class="controls"><button class="control left" data-dir="-1" aria-label="왼쪽">←</button><button class="control right" data-dir="1" aria-label="오른쪽">→</button></div>
-  <section class="overlay" id="overlay">
-    <div class="panel"><h1 id="title">동물 무한계단</h1><p id="desc">동물을 고르고 차오르는 물을 피해<br>빠르게 계단을 올라가세요!</p>
-      <div class="animals" id="animals"><button class="animal selected" data-animal="cat"><span>🐱</span>고양이</button><button class="animal" data-animal="rabbit"><span>🐰</span>토끼</button></div>
-      <button class="start" id="start">게임 시작</button>
-    </div>
-  </section>
+  <div class="sun"></div><div class="cloud"></div>
+  <main class="game" id="game">
+    <header><h1>통통 줄넘기</h1><div class="scoreboard"><div class="pill">점수 <span id="score">0</span></div><div class="pill">최고 <span id="best">0</span></div></div></header>
+    <section class="stage">
+      <div class="ground"></div>
+      <div class="player" id="player"><div class="leg left"></div><div class="leg right"></div><div class="arm left"></div><div class="arm right"></div><div class="body"></div><div class="head"><div class="hair"></div><i class="eye left"></i><i class="eye right"></i></div></div>
+      <div class="rope-wrap" id="ropeWrap"><div class="rope" id="rope"></div></div>
+      <div class="message" id="message"><div class="card"><h2 id="title">준비됐나요?</h2><p id="description">줄이 아래로 올 때 타이밍에 맞춰 점프!</p><button id="start">게임 시작</button></div></div>
+    </section>
+  </main>
+  <div class="hint">스페이스바 · ↑ · 화면 터치로 점프</div>
   <script>
-    const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d');
-    const scoreEl=document.querySelector('#score');
-    const overlay=document.querySelector('#overlay'),titleEl=document.querySelector('#title'),descEl=document.querySelector('#desc');
-    const startBtn=document.querySelector('#start'),animalsEl=document.querySelector('#animals');
-    let W=0,H=0,dpr=1,running=false,score=0,time=1,last=0,selected='cat',steps=[],playerIndex=0;
-    let anim=null,shake=0,best=0,landingDust=[],facing=1;
-    try{best=Number(localStorage.getItem('stairs-best')||0)}catch(e){}
+    const player = document.querySelector('#player');
+    const ropeWrap = document.querySelector('#ropeWrap');
+    const gameEl = document.querySelector('#game');
+    const message = document.querySelector('#message');
+    const title = document.querySelector('#title');
+    const description = document.querySelector('#description');
+    const startBtn = document.querySelector('#start');
+    const scoreEl = document.querySelector('#score');
+    const bestEl = document.querySelector('#best');
+    let running = false, jumping = false, score = 0, angle = 180, last = 0, speed = 155, counted = false;
+    let best = 0;
+    // iOS에서 파일 앱을 통해 연 HTML은 localStorage가 차단될 수 있다.
+    try { best = Number(window.localStorage.getItem('jump-rope-best') || 0); } catch (error) {}
+    bestEl.textContent = best;
 
-    function resize(){dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;canvas.width=W*dpr;canvas.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
-    addEventListener('resize',resize);resize();
-    function addSteps(amount=90){let x=steps.length?steps[steps.length-1].x:0,start=steps.length;for(let i=start;i<start+amount;i++){if(i>0)x+=Math.random()<.5?-1:1;steps.push({x,y:i})}}
-    function makeSteps(){steps=[];addSteps()}
-    function metrics(){return{sw:Math.min(115,W*.24),sh:24,dx:Math.min(82,W*.17),dy:48,baseY:H-155}}
-    function screenPos(s,index){const m=metrics(),focus=playerIndex;return{x:W/2+(s.x-steps[focus].x)*m.dx,y:m.baseY-(index-focus)*m.dy}}
-    function roundRect(x,y,w,h,r){r=Math.min(r,w/2,h/2);ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath()}
-    function drawBg(){
-      const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#273474');g.addColorStop(1,'#171a38');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-      ctx.fillStyle='#ffffff18';for(let i=0;i<26;i++){const x=(i*137+score*2)%W,y=(i*83)%Math.max(200,H*.65);ctx.beginPath();ctx.arc(x,y,1+(i%3),0,Math.PI*2);ctx.fill()}
-      const grad=ctx.createRadialGradient(W*.82,H*.16,5,W*.82,H*.16,85);grad.addColorStop(0,'#fff7bd');grad.addColorStop(1,'#fff7bd00');ctx.fillStyle=grad;ctx.beginPath();ctx.arc(W*.82,H*.16,85,0,Math.PI*2);ctx.fill();
+    function jump() {
+      if (!running || jumping) return;
+      jumping = true; player.classList.remove('jump'); void player.offsetWidth; player.classList.add('jump');
+      setTimeout(() => jumping = false, 560);
     }
-    function drawSteps(){
-      const m=metrics();
-      for(let i=steps.length-1;i>=0;i--){
-        const p=screenPos(steps[i],i);if(p.y<-60||p.y>H+40)continue;
-        ctx.fillStyle='#07172f66';roundRect(p.x-m.sw/2+6,p.y+9,m.sw,m.sh+8,7);ctx.fill();
-        const stair=ctx.createLinearGradient(p.x,p.y,p.x,p.y+m.sh);stair.addColorStop(0,'#fff0a8');stair.addColorStop(.3,'#ffc85f');stair.addColorStop(1,'#db793f');ctx.fillStyle=stair;
-        roundRect(p.x-m.sw/2,p.y,m.sw,m.sh,7);ctx.fill();
-        ctx.strokeStyle='#ffe7a0';ctx.lineWidth=2;ctx.stroke();
-        ctx.fillStyle='#ffffff70';roundRect(p.x-m.sw/2+7,p.y+4,m.sw*.44,4,3);ctx.fill();
+    function startGame(e) {
+      if (e) { e.preventDefault(); e.stopPropagation(); }
+      score = 0; speed = 155; angle = 180; counted = false; running = true; last = performance.now();
+      scoreEl.textContent = 0; message.hidden = true; requestAnimationFrame(loop);
+    }
+    function gameOver() {
+      running = false; gameEl.classList.add('shake'); setTimeout(() => gameEl.classList.remove('shake'), 400);
+      if (score > best) {
+        best = score; bestEl.textContent = best;
+        try { window.localStorage.setItem('jump-rope-best', best); } catch (error) {}
       }
+      title.textContent = '앗, 줄에 걸렸어요!'; description.textContent = `최종 점수는 ${score}점이에요.`; startBtn.textContent = '다시 하기'; message.hidden = false;
     }
-    function burstLandingDust(x,y){for(let i=0;i<8;i++)landingDust.push({x,y,vx:(Math.random()-.5)*2.8,vy:-1-Math.random()*2,life:1,size:2+Math.random()*3})}
-    function drawLandingDust(){
-      for(let i=landingDust.length-1;i>=0;i--){const p=landingDust[i];p.x+=p.vx;p.y+=p.vy;p.vy+=.1;p.life-=.035;if(p.life<=0){landingDust.splice(i,1);continue}ctx.globalAlpha=p.life;ctx.fillStyle='#fff4c7';ctx.beginPath();ctx.arc(p.x,p.y,Math.max(.1,p.size*p.life),0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1;
-    }
-    function drawWater(now){
-      const m=metrics(),surface=m.baseY+(H-m.baseY+35)*Math.max(0,time),wave=7;
-      ctx.save();ctx.beginPath();ctx.moveTo(0,surface);
-      for(let x=0;x<=W+16;x+=16){const y=surface+Math.sin(x*.035+now*.004)*wave+Math.sin(x*.012-now*.002)*3;ctx.lineTo(x,y)}
-      ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();
-      const water=ctx.createLinearGradient(0,surface,0,H);water.addColorStop(0,'#57ddffdd');water.addColorStop(.25,'#249fe5dd');water.addColorStop(1,'#1255a8ee');ctx.fillStyle=water;ctx.fill();
-      ctx.strokeStyle='#c7f8ff';ctx.lineWidth=4;ctx.globalAlpha=.9;ctx.stroke();
-      ctx.globalAlpha=.35;ctx.fillStyle='#dffbff';for(let i=0;i<10;i++){const bx=(i*97+now*.025)%W,by=surface+25+(i*53%(Math.max(40,H-surface)));ctx.beginPath();ctx.arc(bx,by,2+i%4,0,Math.PI*2);ctx.fill()}ctx.restore();
-    }
-    function drawFullAnimal(kind,air){
-      const rabbit=kind==='rabbit',fur=rabbit?'#f2eee9':'#e59a42',light=rabbit?'#ffffff':'#ffd28a',dark=rabbit?'#c9c4c1':'#8b5427';
-      ctx.lineCap='round';ctx.lineJoin='round';
-      // 뒤쪽의 꼬리
-      ctx.fillStyle=light;ctx.strokeStyle=fur;ctx.lineWidth=rabbit?5:8;ctx.beginPath();if(rabbit){ctx.arc(-29,-3,8,0,Math.PI*2);ctx.fill();ctx.stroke()}else{ctx.moveTo(-25,-4);ctx.quadraticCurveTo(-48,-13,-39,-28);ctx.stroke()}
-      // 가로로 뻗은 몸통
-      ctx.fillStyle=fur;ctx.strokeStyle=dark;ctx.lineWidth=2.5;ctx.beginPath();ctx.ellipse(0,0,29,18,0,0,Math.PI*2);ctx.fill();ctx.stroke();
-      ctx.fillStyle=light;ctx.beginPath();ctx.ellipse(4,7,19,8,0,0,Math.PI*2);ctx.fill();
-      // 네 다리: 공중에서는 몸 쪽으로 접힌다.
-      const footY=air>.15?17:28,bend=air>.15?7:2;ctx.strokeStyle=fur;ctx.lineWidth=9;ctx.beginPath();
-      ctx.moveTo(-19,9);ctx.quadraticCurveTo(-22+bend,17,-20,footY);ctx.moveTo(-7,11);ctx.quadraticCurveTo(-10+bend,18,-7,footY);
-      ctx.moveTo(10,11);ctx.quadraticCurveTo(7-bend,18,10,footY);ctx.moveTo(21,8);ctx.quadraticCurveTo(18-bend,17,21,footY);ctx.stroke();
-      ctx.strokeStyle=dark;ctx.lineWidth=2;ctx.beginPath();for(const lx of [-20,-7,10,21]){ctx.moveTo(lx-4,footY);ctx.lineTo(lx+5,footY)}ctx.stroke();
-      // 진행 방향을 바라보는 머리
-      ctx.font=`35px Apple Color Emoji,Segoe UI Emoji`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.shadowColor='#0005';ctx.shadowBlur=4;ctx.shadowOffsetY=3;ctx.fillText(rabbit?'🐰':'🐱',28,-12);ctx.shadowColor='transparent';
-    }
-    function drawAnimal(){
-      const cur=screenPos(steps[playerIndex],playerIndex);let x=cur.x,y=cur.y-29,t=1,air=0,sx=1,sy=1,rotation=0;
-      if(anim){
-        t=Math.min(1,(performance.now()-anim.start)/230);const from=screenPos(steps[anim.from],anim.from),to=screenPos(steps[anim.to],anim.to);air=Math.sin(t*Math.PI);
-        x=from.x+(to.x-from.x)*t;y=from.y+(to.y-from.y)*t-29-air*(selected==='rabbit'?45:36);
-        rotation=(anim.direction||1)*(selected==='cat'?-1:1)*Math.sin(t*Math.PI)*.13;
-        if(t<.18){sx=1.12;sy=.86}else if(t<.7){sx=.9;sy=1.13}else if(t>.84){sx=1.18;sy=.8}
-        if(t>=1){burstLandingDust(to.x,to.y+5);anim=null}
+    function loop(now) {
+      if (!running) return;
+      const dt = Math.min((now - last) / 1000, .035); last = now; angle = (angle + speed * dt) % 360;
+      ropeWrap.style.transform = `translateX(-50%) rotateX(${angle}deg)`;
+      const nearFeet = angle > 345 || angle < 16;
+      if (nearFeet && !counted) {
+        counted = true;
+        if (!jumping) return gameOver();
+        score++; scoreEl.textContent = score; speed = Math.min(310, 155 + score * 6);
       }
-      ctx.save();ctx.globalAlpha=.26*(1-air*.65);ctx.fillStyle='#07172f';ctx.beginPath();ctx.ellipse(x,cur.y+8,27-air*10,7-air*2,0,0,Math.PI*2);ctx.fill();ctx.restore();
-      const size=Math.min(1.08,Math.max(.76,W/410));ctx.save();ctx.translate(x,y);ctx.rotate(rotation);ctx.scale(sx*size*facing,sy*size);drawFullAnimal(selected,air);ctx.restore();
-      ctx.fillStyle='#fff';ctx.font='900 13px system-ui';ctx.textAlign='center';ctx.fillText('YOU',x,y-48*sy*size);
+      if (angle > 35 && angle < 320) counted = false;
+      requestAnimationFrame(loop);
     }
-    function draw(now=performance.now()){ctx.save();if(shake){ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake*=.86;if(shake<.2)shake=0}drawBg();drawSteps();drawLandingDust();drawAnimal();drawWater(now);ctx.restore()}
-    function attempt(dir){
-      if(!running||anim)return;if(playerIndex+12>=steps.length)addSteps();const next=steps[playerIndex+1],cur=steps[playerIndex];
-      if(next.x-cur.x!==dir){shake=18;return endGame('방향이 반대예요!')}
-      const from=playerIndex,direction=dir;facing=dir;playerIndex++;score++;scoreEl.textContent=score;time=Math.min(1,time+.24);anim={from,to:playerIndex,direction,start:performance.now()};
+    startBtn.addEventListener('click', startGame);
+    document.addEventListener('keydown', e => { if (['Space','ArrowUp'].includes(e.code)) { e.preventDefault(); if (running) jump(); else startGame(); } });
+    function touchJump(e) {
+      if (e.target === startBtn || !running) return;
+      e.preventDefault();
+      jump();
     }
-    function startGame(e){if(e){e.preventDefault();e.stopPropagation()}makeSteps();playerIndex=0;score=0;time=1;anim=null;landingDust=[];facing=1;scoreEl.textContent='0';running=true;overlay.hidden=true;last=performance.now()}
-    function endGame(reason){
-      running=false;if(score>best){best=score;try{localStorage.setItem('stairs-best',best)}catch(e){}}
-      setTimeout(()=>{titleEl.textContent=reason;descEl.innerHTML=`${score}층까지 올라갔어요!<br>최고 기록 ${best}층`;startBtn.textContent='다시 도전';animalsEl.style.display='flex';overlay.hidden=false},280)
-    }
-    function loop(now){
-      const dt=Math.min((now-last)/1000,.05);last=now;
-      if(running){const drain=Math.min(2.5,.42*Math.pow(1.012,score));time-=dt*drain;if(time<=0){shake=24;endGame('물에 빠졌어요!')}}
-      draw(now);requestAnimationFrame(loop)
-    }
-    animalsEl.addEventListener('click',e=>{const b=e.target.closest('.animal');if(!b)return;selected=b.dataset.animal;document.querySelectorAll('.animal').forEach(x=>x.classList.toggle('selected',x===b))});
-    let lastStartInput=0;
-    function startInput(e){const now=Date.now();if(now-lastStartInput<500)return;lastStartInput=now;startGame(e)}
-    startBtn.addEventListener('touchstart',startInput,{passive:false});
-    startBtn.addEventListener('click',startInput);
-    document.querySelectorAll('.control').forEach(b=>{
-      let lastPress=0;
-      const press=e=>{const now=Date.now();if(now-lastPress<120)return;lastPress=now;e.preventDefault();b.classList.add('pressed');attempt(Number(b.dataset.dir))};
-      const release=()=>b.classList.remove('pressed');
-      b.addEventListener('touchstart',press,{passive:false});b.addEventListener('touchend',release,{passive:true});b.addEventListener('touchcancel',release,{passive:true});
-      b.addEventListener('pointerdown',press);b.addEventListener('pointerup',release);b.addEventListener('pointercancel',release);
-      if(!('ontouchstart' in window)){b.addEventListener('mousedown',press);b.addEventListener('mouseup',release);b.addEventListener('mouseleave',release)}
-    });
-    addEventListener('keydown',e=>{if(e.repeat)return;if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A'){e.preventDefault();attempt(-1)}if(e.key==='ArrowRight'||e.key==='d'||e.key==='D'){e.preventDefault();attempt(1)}if(!running&&(e.key==='Enter'||e.key===' '))startGame(e)});
-    makeSteps();last=performance.now();requestAnimationFrame(loop);
+    // 구형 iOS Safari는 Pointer Events를 지원하지 않으므로 touchstart를 사용한다.
+    if (window.PointerEvent) document.addEventListener('pointerdown', touchJump);
+    else document.addEventListener('touchstart', touchJump, { passive: false });
   </script>
 </body>
 </html>
-
-
